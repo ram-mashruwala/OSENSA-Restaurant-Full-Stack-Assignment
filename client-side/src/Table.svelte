@@ -1,5 +1,13 @@
+<script lang="ts">
+	let ordered: boolean = $state(false);
+</script>
+
 <div>
-	<button>Order</button>
+	{#if !ordered}
+		<button onclick={() => (ordered = true)}>Order</button>
+	{:else}
+		<p>Ordered! Your food is on the way!</p>
+	{/if}
 </div>
 
 <style>
