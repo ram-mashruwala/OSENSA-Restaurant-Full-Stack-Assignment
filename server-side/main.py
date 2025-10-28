@@ -74,12 +74,15 @@ if __name__ == "__main__":
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
-    client.connect(broker, port)
     client.subscribe(topic="ORDER", qos=2)
+    try:
+        client.connect(broker, port)
+    except ConnectionRefusedError:
+        print("Broker refused to connect")
+        print("Exiting ...")
+        running = False
 
     client.loop_start()
-
-    print("Connected to Broker")
 
     while running:
         time.sleep(0.2)
