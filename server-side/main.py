@@ -1,4 +1,3 @@
-import keyboard
 import json
 import random
 import time
@@ -42,8 +41,10 @@ def on_connect(client, userdata, flags, rc, properties):
         print("Connected to MQTT Broker!")
         global connected
         connected = True
+        return True
     else:
         print("Failed to connect, return code %d\n", rc)
+        return False
 
 
 def on_message(client, userdata, message):
@@ -55,26 +56,20 @@ client = mqtt_client.Client(
     callback_api_version=CallbackAPIVersion.VERSION2,
     transport="websockets",
 )
-print("Connecting...")
-client.on_connect = on_connect
-client.on_message = on_message
-client.connect(broker, port)
-client.subscribe(topic="ORDER", qos=2)
 
-client.loop_start()
+if __name__ == "__main__":
+    print("Connecting...")
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.connect(broker, port)
+    client.subscribe(topic="ORDER", qos=2)
 
-while connected != True:
-    time.sleep(0.2)
+    client.loop_start()
 
-print("Connected to Broker")
+    while connected != True:
+        time.sleep(0.2)
 
-print("Press q to quit out of program")
-while True:
-    time.sleep(0.2)
-    if keyboard.is_pressed("q"):
-        client.disconnect()
-        print("Quitting out of program ...")
-        break
+    print("Connected to Broker")
 
-
-client.loop_stop()
+    while True:
+        time.sleep(0.2)
