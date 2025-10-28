@@ -15,8 +15,13 @@
 	{:else if !ordered}
 		<button
 			onclick={() => {
-				ordered = true;
-				Order(id);
+				const orderTemp: string | null = window.prompt(
+					"Please Enter in the name of the Food you want.",
+				);
+				if (orderTemp == null) {
+					return;
+				}
+				Order(id, orderTemp);
 			}}>Order</button
 		>
 	{:else if ordered && !arrived}

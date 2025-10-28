@@ -18,6 +18,9 @@ client.on('connect', () => {
   client.subscribe('FOOD', { qos: 2 }, (err: Error | null) => {
     if (err) console.error('Subscription error:', err);
   });
+  client.subscribe('ORDER', { qos: 2 }, (err: Error | null) => {
+    if (err) console.error('Subscription error:', err);
+  });
 });
 
 client.on('error', (err: Error) => {
@@ -28,12 +31,23 @@ client.on('message', (topic: string, message: Buffer<ArrayBufferLike>) => {
   console.log(`${topic}: ${message.toString()}`);
 
   const messageJson = JSON.parse(message.toString())
+  if (!("id" in messageJson) || !("order" in messageJson)) {
+    return
+  }
   const id: number = messageJson["id"]
+  const orderName: string = messageJson["order"]
+  if (topic === "ORDER") {
+    tableState[id - 1]["arrived"] = false
+    tableState[id - 1]["ordered"] = true
+    return
+  }
+
   tableState[id - 1]["arrived"] = true
+  tableState[id - 1]["orderName"] = orderName
 });
 
-export function Order(table_id: number) {
-  client.publish("ORDER", JSON.stringify({ "id": table_id }))
+export function Order(table_id: number, order: string) {
+  client.publish("ORDER", JSON.stringify({ "id": table_id, "order": order }))
   tableState[table_id - 1]["ordered"] = true
 }
 
