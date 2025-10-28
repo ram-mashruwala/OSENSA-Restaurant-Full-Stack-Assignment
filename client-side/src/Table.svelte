@@ -1,23 +1,34 @@
 <script lang="ts">
-	let ordered: boolean = $state(false);
 	import { connection_state, Order } from "./lib/MQTT_Handler.svelte";
+	import { tableState } from "./lib/state.svelte";
 
 	const { id } = $props();
+
+	let ordered: boolean = $derived(tableState[id - 1]["ordered"]);
+	let arrived: boolean = $derived(tableState[id - 1]["arrived"]);
 </script>
 
 <div>
 	<p>{id}</p>
-	{#if !ordered && connection_state.connected}
+	{#if !connection_state.connected}
+		<button disabled onclick={() => (ordered = true)}>Order</button>
+	{:else if !ordered}
 		<button
 			onclick={() => {
 				ordered = true;
 				Order(id);
 			}}>Order</button
 		>
-	{:else if !ordered && !connection_state.connected}
-		<button disabled onclick={() => (ordered = true)}>Order</button>
-	{:else}
+	{:else if ordered && !arrived}
 		<p>Ordered! Your food is on the way!</p>
+	{:else if arrived}
+		<p>{tableState[id - 1]["orderName"]}</p>
+		<button
+			onclick={() => {
+				tableState[id - 1]["ordered"] = false;
+				tableState[id - 1]["arrived"] = false;
+			}}>Clear Table</button
+		>
 	{/if}
 </div>
 
