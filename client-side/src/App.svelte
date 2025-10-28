@@ -10,11 +10,11 @@
     <h2>Connecting to MQTT Server ...</h2>
 {/if}
 <div>
-    <Table />
-    <Table />
+    <Table id="1" />
+    <Table id="2" />
     <div class="flex-break"></div>
-    <Table />
-    <Table />
+    <Table id="3" />
+    <Table id="4" />
 </div>
 
 <style>

@@ -1,9 +1,12 @@
 <script lang="ts">
 	let ordered: boolean = $state(false);
 	import { connection_state } from "./lib/MQTT_Handler.svelte";
+
+	const { id } = $props();
 </script>
 
 <div>
+	<p>{id}</p>
 	{#if !ordered && connection_state.connected}
 		<button onclick={() => (ordered = true)}>Order</button>
 	{:else if !ordered && !connection_state.connected}
