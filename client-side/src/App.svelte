@@ -1,5 +1,6 @@
 <script lang="ts">
     import Table from "./Table.svelte";
+    import client from "./lib/MQTT_Handler.svelte";
 </script>
 
 <h1>Restaurant</h1>
