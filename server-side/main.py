@@ -6,6 +6,7 @@ import threading
 from paho.mqtt import client as mqtt_client
 from paho.mqtt.enums import CallbackAPIVersion
 
+# Initialize global variables
 running = True
 message_recieved = False
 broker = "localhost"
@@ -64,24 +65,60 @@ def on_disconnect(client, userdata, flags, reason_code, properties):
 
 
 def on_message(client, userdata, message):
+    """
+    Callback function triggered when the MQTT client receives a message from broker
+
+    This function is called automatically by the Paho MQTT client when the
+    client recieves a message. This function then starts a background
+    thread to process a food order if the given input is valid.
+
+    Parameters
+    ----------
+    client
+        The MQTT client instance that initiated the connection.
+    userdata
+        The private user data.
+    message
+        The MQTT message object
+    """
     message_json = json.loads(str(message.payload.decode("utf-8")))
 
     global processing
 
-    id = int(message_json["id"])
+    if "id" not in message_json or "order" not in message_json:
+        return False
+
+    try:
+        id = int(message_json["id"])
+        order = message_json["order"]
+    except ValueError:
+        return False
 
     if id >= len(processing) or processing[id]:
         return False
 
     processing[id] = True
-    thread = threading.Thread(target=waitThenSendFood, args=(id, client))
+    thread = threading.Thread(target=waitThenSendFood, args=(id, client, order))
     thread.start()
     return True
 
 
-def waitThenSendFood(id, client):
+def waitThenSendFood(id, client, order):
+    """
+    This function waits for a random amount of time (between 1 second
+    and 20 seconds) and then publishes the completed order in "FOOD" topic
+
+    Parameters
+    ----------
+    id
+        the id of the table that the food is meant to go to.
+    client
+        The MQTT client instance that initiated the connection.
+    order
+        The name of the order.
+    """
     time.sleep(random.randint(1, 20))
-    client.publish("FOOD", json.dumps({"id": id}), qos=2)
+    client.publish("FOOD", json.dumps({"id": id, "order": order}), qos=2)
     global processing
     processing[id] = False
 
