@@ -5,7 +5,7 @@ import time
 from paho.mqtt import client as mqtt_client
 from paho.mqtt.enums import CallbackAPIVersion
 
-connected = False
+running = True
 message_recieved = False
 broker = "localhost"
 port = 8084
@@ -39,12 +39,24 @@ def on_connect(client, userdata, flags, rc, properties):
 
     if rc == 0:
         print("Connected to MQTT Broker!")
-        global connected
-        connected = True
         return True
     else:
         print("Failed to connect, return code %d\n", rc)
         return False
+
+
+def on_disconnect(client, userdata, flags, reason_code, properties):
+    """
+    Callback function triggered when the MQTT client disconnects from broker.
+
+    This function is called automatically by the Paho MQTT client
+    when it disconnects from the MQTT broker. It sets the global
+    `running` flag to False
+    """
+    print("Server Disconnected ...")
+    print("Shutting Down ...")
+    global running
+    running = False
 
 
 def on_message(client, userdata, message):
@@ -61,15 +73,15 @@ if __name__ == "__main__":
     print("Connecting...")
     client.on_connect = on_connect
     client.on_message = on_message
+    client.on_disconnect = on_disconnect
     client.connect(broker, port)
     client.subscribe(topic="ORDER", qos=2)
 
     client.loop_start()
 
-    while connected != True:
-        time.sleep(0.2)
-
     print("Connected to Broker")
 
-    while True:
+    while running:
         time.sleep(0.2)
+
+    client.loop_stop()
