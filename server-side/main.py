@@ -86,17 +86,16 @@ def waitThenSendFood(id, client):
     processing[id] = False
 
 
-client = mqtt_client.Client(
-    client_id=client_id,
-    callback_api_version=CallbackAPIVersion.VERSION2,
-    transport="websockets",
-)
-
 if __name__ == "__main__":
-    print("Connecting...")
+    client = mqtt_client.Client(
+        client_id=client_id,
+        callback_api_version=CallbackAPIVersion.VERSION2,
+        transport="websockets",
+    )
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
+    print("Connecting...")
     try:
         client.connect(broker, port)
     except ConnectionRefusedError:
@@ -106,10 +105,12 @@ if __name__ == "__main__":
 
     client.loop_start()
 
-    if running:
-        print("Connected to Broker")
+    print("To Quit, press <C-c>")
 
-    while running:
-        time.sleep(0.2)
+    try:
+        while running:
+            time.sleep(0.2)
+    except KeyboardInterrupt:
+        print("Quitting ...")
 
     client.loop_stop()
