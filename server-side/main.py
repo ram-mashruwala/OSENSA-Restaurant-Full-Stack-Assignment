@@ -1,4 +1,5 @@
 import json
+import logging
 import random
 import time
 import threading
@@ -12,8 +13,8 @@ message_recieved = False
 broker = "localhost"
 port = 8084
 processing = [False for _ in range(5)]
-
 client_id = f"python-mqtt-{random.randint(0, 1000)}"
+logger = logging.getLogger(__name__)
 
 
 def on_connect(client, userdata, flags, rc, properties):
@@ -42,10 +43,12 @@ def on_connect(client, userdata, flags, rc, properties):
 
     if rc == 0:
         print("Connected to MQTT Broker!")
+        logger.info("Connected to Broker")
         client.subscribe(topic="ORDER", qos=2)
         return True
     else:
         print("Failed to connect, return code %d\n", rc)
+        logger.info("Failed to connect to Broker")
         return False
 
 
@@ -59,6 +62,7 @@ def on_disconnect(client, userdata, flags, reason_code, properties):
     """
     print("Server Disconnected ...")
     print("Shutting Down ...")
+    logger.info("Shutting down backend")
     global running
     running = False
     return running
@@ -83,20 +87,27 @@ def on_message(client, userdata, message):
     """
     message_json = json.loads(str(message.payload.decode("utf-8")))
 
+    logger.info(f"Got {str(message)} message from broker")
+
     global processing
 
     if "id" not in message_json or "order" not in message_json:
+        logger.info("Malformed message: id or order not in message")
         return False
 
     try:
         id = int(message_json["id"])
-        order = message_json["order"]
     except ValueError:
+        logger.info("Malformed message: id is not an int")
         return False
+
+    order = message_json["order"]
 
     if id >= len(processing) or processing[id]:
+        logger.info("Malformed message: id out of bounds")
         return False
 
+    logger.info(f"Processing order on table #{id}")
     processing[id] = True
     thread = threading.Thread(target=waitThenSendFood, args=(id, client, order))
     thread.start()
@@ -118,12 +129,16 @@ def waitThenSendFood(id, client, order):
         The name of the order.
     """
     time.sleep(random.randint(1, 20))
-    client.publish("FOOD", json.dumps({"id": id, "order": order}), qos=2)
+    message = json.dumps({"id": id, "order": order})
+    client.publish("FOOD", message, qos=2)
+    logger.info(f"Published {str(message)} to FOOD topic.")
     global processing
+    logger.info(f"Done processing table #{id}")
     processing[id] = False
 
 
 if __name__ == "__main__":
+    logging.basicConfig(filename="backend.log", level=logging.INFO)
     client = mqtt_client.Client(
         client_id=client_id,
         callback_api_version=CallbackAPIVersion.VERSION2,
@@ -132,22 +147,27 @@ if __name__ == "__main__":
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
+    logger.info("Connecting to Broker")
     print("Connecting...")
     try:
         client.connect(broker, port)
     except ConnectionRefusedError:
+        logger.info("Broker refused to connect")
         print("Broker refused to connect")
         print("Exiting ...")
         running = False
 
     client.loop_start()
 
-    print("To Quit, press <C-c>")
+    if running:
+        print("To Quit, press <C-c>")
 
     try:
         while running:
             time.sleep(0.2)
     except KeyboardInterrupt:
         print("Quitting ...")
+        logger.info("User stopped backend")
 
-    client.loop_stop()
+        client.loop_stop()
+    client.disconnect()
