@@ -14,7 +14,7 @@ client.on("close", () => {
 client.on('connect', () => {
   console.log('Connected to MQTT broker');
   connection_state.connected = true;
-  client.subscribe('test', { qos: 2 }, (err: Error | null) => {
+  client.subscribe('FOOD', { qos: 2 }, (err: Error | null) => {
     if (err) console.error('Subscription error:', err);
   });
 });
@@ -27,5 +27,8 @@ client.on('message', (topic: string, message: Buffer<ArrayBufferLike>) => {
   console.log(`${topic}: ${message.toString()}`);
 });
 
+export function Order(table_id: number) {
+  client.publish("ORDER", JSON.stringify({ "id": table_id }))
+}
 
 export default client;
