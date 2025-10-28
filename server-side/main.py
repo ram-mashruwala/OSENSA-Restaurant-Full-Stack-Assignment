@@ -1,6 +1,7 @@
 import json
 import random
 import time
+import threading
 
 from paho.mqtt import client as mqtt_client
 from paho.mqtt.enums import CallbackAPIVersion
@@ -9,6 +10,7 @@ running = True
 message_recieved = False
 broker = "localhost"
 port = 8084
+processing = [False for _ in range(5)]
 
 client_id = f"python-mqtt-{random.randint(0, 1000)}"
 
@@ -58,10 +60,30 @@ def on_disconnect(client, userdata, flags, reason_code, properties):
     print("Shutting Down ...")
     global running
     running = False
+    return running
 
 
 def on_message(client, userdata, message):
-    pass
+    message_json = json.loads(str(message.payload.decode("utf-8")))
+
+    global processing
+
+    id = int(message_json["id"])
+
+    if id >= len(processing) or processing[id]:
+        return False
+
+    processing[id] = True
+    thread = threading.Thread(target=waitThenSendFood, args=(id, client))
+    thread.start()
+    return True
+
+
+def waitThenSendFood(id, client):
+    time.sleep(random.randint(1, 20))
+    client.publish("FOOD", json.dumps({"id": id}), qos=2)
+    global processing
+    processing[id] = False
 
 
 client = mqtt_client.Client(
@@ -83,6 +105,9 @@ if __name__ == "__main__":
         running = False
 
     client.loop_start()
+
+    if running:
+        print("Connected to Broker")
 
     while running:
         time.sleep(0.2)
