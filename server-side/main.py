@@ -1,3 +1,4 @@
+import keyboard
 import json
 import random
 import time
@@ -41,6 +42,16 @@ client.loop_start()
 
 while connected != True:
     time.sleep(0.2)
+
+print("Connected to Broker")
+
+print("Press q to quit out of program")
+while True:
+    time.sleep(0.2)
+    if keyboard.is_pressed("q"):
+        client.disconnect()
+        print("Quitting out of program ...")
+        break
 
 
 client.loop_stop()
