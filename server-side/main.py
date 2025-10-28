@@ -14,7 +14,30 @@ port = 8084
 client_id = f"python-mqtt-{random.randint(0, 1000)}"
 
 
-def on_connect(client, userdata, flags, rc, *args):
+def on_connect(client, userdata, flags, rc, properties):
+    """
+    Callback function triggered when the MQTT client connects to the broker.
+
+    This function is called automatically by the Paho MQTT client when a
+    connection attempt to the MQTT broker completes—either successfully or
+    unsuccessfully. It sets the global `connected` flag to True if the connection
+    was successful, or prints an error message if the connection failed.
+
+    Parameters
+    ----------
+    client
+        The MQTT client instance that initiated the connection.
+    userdata
+        The private user data.
+    flags
+        Response flags sent by the broker, typically containing session information.
+    rc
+        The connection result. A value of 0 indicates success. Non-zero values
+        indicate different connection errors.
+    properties
+        MQTT v5.0 properties returned by the broker on connection.
+    """
+
     if rc == 0:
         print("Connected to MQTT Broker!")
         global connected
