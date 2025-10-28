@@ -6,6 +6,11 @@ const client: mqtt.MqttClient = mqtt.connect(BROKER_URL);
 
 export let connection_state = $state({ connected: false })
 
+client.on("close", () => {
+  console.log("closed MQTT connection");
+  connection_state.connected = false
+})
+
 client.on('connect', () => {
   console.log('Connected to MQTT broker');
   connection_state.connected = true;
