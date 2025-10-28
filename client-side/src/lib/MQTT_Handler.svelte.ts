@@ -1,4 +1,5 @@
 import mqtt from 'mqtt';
+import { tableState } from './state.svelte';
 
 const BROKER_URL = 'ws://localhost:8084/mqtt';
 
@@ -25,10 +26,15 @@ client.on('error', (err: Error) => {
 
 client.on('message', (topic: string, message: Buffer<ArrayBufferLike>) => {
   console.log(`${topic}: ${message.toString()}`);
+
+  const messageJson = JSON.parse(message.toString())
+  const id: number = messageJson["id"]
+  tableState[id - 1]["arrived"] = true
 });
 
 export function Order(table_id: number) {
   client.publish("ORDER", JSON.stringify({ "id": table_id }))
+  tableState[table_id - 1]["ordered"] = true
 }
 
 export default client;
