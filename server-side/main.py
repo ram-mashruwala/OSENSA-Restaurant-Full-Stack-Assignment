@@ -39,6 +39,7 @@ def on_connect(client, userdata, flags, rc, properties):
 
     if rc == 0:
         print("Connected to MQTT Broker!")
+        client.subscribe(topic="ORDER", qos=2)
         return True
     else:
         print("Failed to connect, return code %d\n", rc)
@@ -74,7 +75,6 @@ if __name__ == "__main__":
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
-    client.subscribe(topic="ORDER", qos=2)
     try:
         client.connect(broker, port)
     except ConnectionRefusedError:
