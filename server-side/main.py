@@ -22,22 +22,25 @@ def on_connect(client, userdata, flags, rc, *args):
         print("Failed to connect, return code %d\n", rc)
 
 
+def on_message(client, userdata, message):
+    pass
+
+
 client = mqtt_client.Client(
     client_id=client_id,
     callback_api_version=CallbackAPIVersion.VERSION2,
     transport="websockets",
 )
-# client.tls_set(ca_certs='./server-ca.crt')
 print("Connecting...")
 client.on_connect = on_connect
+client.on_message = on_message
 client.connect(broker, port)
+client.subscribe(topic="ORDER", qos=2)
+
 client.loop_start()
 
 while connected != True:
     time.sleep(0.2)
 
-client.publish(
-    topic="test", payload=json.dumps({"test": "testing", "test2": "testing2"})
-)
 
 client.loop_stop()
