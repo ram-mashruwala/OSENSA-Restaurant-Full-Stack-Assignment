@@ -1,3 +1,19 @@
+<!-- 
+@component
+
+This is a Table component that represents a single table in a restaurant
+ordering system. It uses the MQTT Handler to manage order states
+and displays the current status of the table. Users can place an order,
+view the order status, and clear the table once the order has arrived.
+
+PROPS:
+
+id: number
+	This is the id of the table, which is used to place and recieve orders and manage 
+	the state of the table
+
+-->
+
 <script lang="ts">
 	import { connection_state, Order } from "./lib/MQTT_Handler.svelte";
 	import { tableState } from "./lib/state.svelte";
@@ -51,5 +67,10 @@
 
 	button:hover {
 		cursor: pointer;
+	}
+
+	p {
+		color: white;
+		text-align: center;
 	}
 </style>
