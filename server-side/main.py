@@ -1,18 +1,25 @@
+from dotenv import load_dotenv
+import os
 import json
 import logging
 import random
 import time
 import threading
+import ssl
 
 from paho.mqtt import client as mqtt_client
 from paho.mqtt.enums import CallbackAPIVersion
+from paho import mqtt
 
 # Initialize global variables
+load_dotenv()
 running = True
-message_recieved = False
-broker = "localhost"
-port = 8084
-processing = [False for _ in range(5)]
+broker = os.getenv("BROKER_URL")
+port = int(os.getenv("PORT"))
+username = os.getenv("USERNAME")
+password = os.getenv("PASSWORD")
+length = int(os.getenv("LENGTH"))
+processing = [False for _ in range(length)]
 client_id = f"python-mqtt-{random.randint(0, 1000)}"
 logger = logging.getLogger(__name__)
 
@@ -47,7 +54,7 @@ def on_connect(client, userdata, flags, rc, properties):
         client.subscribe(topic="ORDER", qos=2)
         return True
     else:
-        print("Failed to connect, return code %d\n", rc)
+        print("Failed to connect, return code", rc)
         logger.info("Failed to connect to Broker")
         return False
 
@@ -87,28 +94,33 @@ def on_message(client, userdata, message):
     """
     message_json = json.loads(str(message.payload.decode("utf-8")))
 
-    logger.info(f"Got {str(message)} message from broker")
+    logger.info(f"Got {str(message_json)} message from broker")
+    print(f"Got {str(message_json)} message from broker")
 
     global processing
 
     if "id" not in message_json or "order" not in message_json:
         logger.info("Malformed message: id or order not in message")
+        print("Malformed message: id or order not in message")
         return False
 
     try:
         id = int(message_json["id"])
     except ValueError:
         logger.info("Malformed message: id is not an int")
+        print("Malformed message: id is not an int")
         return False
 
     order = message_json["order"]
 
-    if id >= len(processing) or processing[id]:
+    if id >= len(processing) or processing[id - 1]:
         logger.info("Malformed message: id out of bounds")
+        print("Malformed message: id out of bounds")
         return False
 
     logger.info(f"Processing order on table #{id}")
-    processing[id] = True
+    print(f"Processing order on table #{id}")
+    processing[id - 1] = True
     thread = threading.Thread(target=waitThenSendFood, args=(id, client, order))
     thread.start()
     return True
@@ -128,13 +140,15 @@ def waitThenSendFood(id, client, order):
     order
         The name of the order.
     """
-    time.sleep(random.randint(1, 20))
+    # time.sleep(random.randint(1, 20))
     message = json.dumps({"id": id, "order": order})
     client.publish("FOOD", message, qos=2)
     logger.info(f"Published {str(message)} to FOOD topic.")
+    print(f"Published {str(message)} to FOOD topic.")
     global processing
     logger.info(f"Done processing table #{id}")
-    processing[id] = False
+    print(f"Done processing table #{id}")
+    processing[id - 1] = False
 
 
 if __name__ == "__main__":
@@ -144,6 +158,9 @@ if __name__ == "__main__":
         callback_api_version=CallbackAPIVersion.VERSION2,
         transport="websockets",
     )
+
+    client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
+    client.username_pw_set(username=username, password=password)
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
