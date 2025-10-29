@@ -141,7 +141,7 @@ def waitThenSendFood(id, client, order):
         The name of the order.
     """
     time.sleep(random.randint(1, 20))
-    message = json.dumps({"id": id, "order": order})
+    message = json.dumps({"id": id, "order": "hello"})
     client.publish("FOOD", message, qos=2)
     logger.info(f"Published {str(message)} to FOOD topic.")
     print(f"Published {str(message)} to FOOD topic.")
