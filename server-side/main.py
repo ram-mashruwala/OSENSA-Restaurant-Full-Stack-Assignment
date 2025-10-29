@@ -92,18 +92,23 @@ def on_message(client, userdata, message):
     message
         The MQTT message object
     """
+
+    # Load message into variable
     message_json = json.loads(str(message.payload.decode("utf-8")))
 
+    # Log message
     logger.info(f"Got {str(message_json)} message from broker")
     print(f"Got {str(message_json)} message from broker")
 
     global processing
 
+    # if message is malformed, return
     if "id" not in message_json or "order" not in message_json:
         logger.info("Malformed message: id or order not in message")
         print("Malformed message: id or order not in message")
         return False
 
+    # Tries to turn id value into int, returns false if id value is not int
     try:
         id = int(message_json["id"])
     except ValueError:
@@ -113,13 +118,17 @@ def on_message(client, userdata, message):
 
     order = message_json["order"]
 
+    # if id is out of bounds or it is currently being processed, return
     if id >= len(processing) or processing[id - 1]:
         logger.info("Malformed message: id out of bounds")
         print("Malformed message: id out of bounds")
         return False
 
+    # Logging
     logger.info(f"Processing order on table #{id}")
     print(f"Processing order on table #{id}")
+
+    # Create a new thread to publish message
     processing[id - 1] = True
     thread = threading.Thread(target=waitThenSendFood, args=(id, client, order))
     thread.start()
@@ -140,11 +149,21 @@ def waitThenSendFood(id, client, order):
     order
         The name of the order.
     """
+
+    # Sleep current thread for a random amount of time
     time.sleep(random.randint(1, 20))
+
+    # Create message
     message = json.dumps({"id": id, "order": order})
+
+    # Publish message
     client.publish("FOOD", message, qos=2)
+
+    # Log and print message
     logger.info(f"Published {str(message)} to FOOD topic.")
     print(f"Published {str(message)} to FOOD topic.")
+
+    # Remove current table from processing
     global processing
     logger.info(f"Done processing table #{id}")
     print(f"Done processing table #{id}")
@@ -153,19 +172,26 @@ def waitThenSendFood(id, client, order):
 
 if __name__ == "__main__":
     logging.basicConfig(filename="backend.log", level=logging.INFO)
+
+    # Create new MQTT client
     client = mqtt_client.Client(
         client_id=client_id,
         callback_api_version=CallbackAPIVersion.VERSION2,
         transport="websockets",
     )
 
+    # Set username and password as well as tls version
     client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
     client.username_pw_set(username=username, password=password)
+
+    # Assign Callback handlers
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
     logger.info("Connecting to Broker")
     print("Connecting...")
+
+    # Attempts to connect to MQTT Broker
     try:
         client.connect(broker, port)
     except ConnectionRefusedError:

@@ -1,3 +1,10 @@
+<!--
+@component
+
+This component serves as the entry point for the restaurant monitoring interface.
+
+-->
+
 <script lang="ts">
     import Table from "./Table.svelte";
     import client from "./lib/MQTT_Handler.svelte";
