@@ -1,5 +1,6 @@
 asyncio==4.0.0
 evdev==1.9.2
 paho-mqtt==2.1.0
+python-dotenv==1.2.1
 python-xlib==0.33
 six==1.17.0
