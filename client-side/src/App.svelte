@@ -49,9 +49,4 @@
         margin-top: 20vh;
         column-gap: 30vw;
     }
-
-    .flex-break {
-        flex-basis: 100%;
-        height: 0px;
-    }
 </style>

@@ -1,9 +1,15 @@
 import mqtt from 'mqtt';
 import { tableState } from './state.svelte';
 
-const BROKER_URL = 'ws://localhost:8084/mqtt';
+const BROKER_URL = 'wss://64a28646a5ce4627990d708b63f21208.s1.eu.hivemq.cloud:8884/mqtt';
+const OPTIONS = {
+  "protocolVersion": 5,
+  "username": "testing",
+  "password": "Test123456"
+}
 
-const client: mqtt.MqttClient = mqtt.connect(BROKER_URL);
+
+const client: mqtt.MqttClient = mqtt.connect(BROKER_URL, OPTIONS);
 
 export let connection_state = $state({ connected: false })
 
